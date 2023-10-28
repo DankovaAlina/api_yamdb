@@ -1,8 +1,7 @@
 from django.db import models
-from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy
-import datetime
 from django.core.validators import MinValueValidator, MaxValueValidator
+
+from .validators import symbol_validator, validate_year
 
 
 class User(models.Model):
@@ -30,11 +29,16 @@ class Category(models.Model):
 
     name = models.CharField(max_length=256, verbose_name='Название')
     slug = models.SlugField(unique=True, max_length=50,
+                            validators=[symbol_validator],
                             verbose_name='Идентификатор')
 
     class Meta:
+        ordering = ['name']
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
+
+    def __str__(self):
+        return self.name
 
 
 class Genre(models.Model):
@@ -47,6 +51,7 @@ class Genre(models.Model):
                             verbose_name='Идентификатор')
 
     class Meta:
+        ordering = ['name']
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
 
@@ -54,26 +59,21 @@ class Genre(models.Model):
         return self.name
 
 
-def validate_year(value):
-    """Валидация проверки года в модели Title."""
-
-    current_year = datetime.date.today().year
-    if value > current_year:
-        raise ValidationError(
-            gettext_lazy('Год не может быть больше текущего года.'),
-            params={'value': value},
-        )
-
-
 class Title(models.Model):
     """Модель заголовка."""
 
     name = models.CharField(max_length=256, verbose_name='Название')
-    year = models.PositiveIntegerField(validators=[validate_year])
+    year = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        validators=[validate_year],
+        verbose_name='Год',
+    )
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         related_name='titles',
         verbose_name='Категория'
     )
@@ -81,14 +81,18 @@ class Title(models.Model):
     genres = models.ManyToManyField(
         Genre,
         through='TitleGenre',
-        blank=False,
+        blank=True,
         related_name='titles',
         verbose_name='Жанр'
     )
 
     class Meta:
+        ordering = ['name']
         verbose_name = 'Заголовок'
         verbose_name_plural = 'Заголовки'
+
+    def __str__(self):
+        return self.name
 
 
 class Review(models.Model):
@@ -162,6 +166,3 @@ class TitleGenre(models.Model):
         Genre,
         on_delete=models.CASCADE,
     )
-
-    def __str__(self):
-        return f"{self.title.name} - {self.genre.name}"

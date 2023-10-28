@@ -1,32 +1,28 @@
-from django.shortcuts import render
 from .serializers import CategorySerializer, GenreSerializer, TitleSerializer
 from rest_framework.viewsets import ModelViewSet
+from django.shortcuts import get_object_or_404
 from reviews.models import Category, Genre, Title
 from .permissions import AdminAddDeletePermission
-from django.shortcuts import get_object_or_404
+from .mixins import ListCreateDestroyViewSet
 
 
-class CategoryViewSet(ModelViewSet):
+class CategoryViewSet(ListCreateDestroyViewSet):
     """
     Вьюсет категории.
     """
 
     serializer_class = CategorySerializer
     permission_classes = (AdminAddDeletePermission,)
-    http_method_names = ('get', 'post', 'delete')
-    lookup_field = 'slug'
     queryset = Category.objects.all()
 
 
-class GenreViewSet(ModelViewSet):
+class GenreViewSet(ListCreateDestroyViewSet):
     """
     Вьюсет жанра.
     """
 
     serializer_class = GenreSerializer
     permission_classes = (AdminAddDeletePermission,)
-    http_method_names = ('get', 'post', 'delete')
-    lookup_field = 'slug'
     queryset = Genre.objects.all()
 
 
@@ -39,10 +35,14 @@ class TitleViewSet(ModelViewSet):
     permission_classes = (AdminAddDeletePermission,)
     queryset = Title.objects.all()
 
-    def get_serializer_context(self):
-        """
-        Переопределение метода для добавления context в сериализатор.
-        """
-        context = super().get_serializer_context()
-        context['genres'] = Genre.objects.all()
-        return context
+    def perform_create(self, serializer):
+        category = get_object_or_404(
+            Category, slug=self.request.data.get('category')
+        )
+        genre = Genre.objects.filter(
+            slug__in=self.request.data.getlist('genre')
+        )
+        serializer.save(category=category, genre=genre)
+
+    def perform_update(self, serializer):
+        self.perform_create(serializer)
