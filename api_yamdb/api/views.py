@@ -1,7 +1,8 @@
-from .serializers import CategorySerializer, GenreSerializer, TitleSerializer
-from rest_framework.viewsets import ModelViewSet
 from django.shortcuts import get_object_or_404
+from rest_framework.viewsets import ModelViewSet
+
 from reviews.models import Category, Genre, Title
+from .serializers import CategorySerializer, GenreSerializer, TitleSerializer
 from .permissions import AdminAddDeletePermission
 from .mixins import ListCreateDestroyViewSet
 
