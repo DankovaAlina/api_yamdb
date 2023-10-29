@@ -6,11 +6,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from api.permissions import IsAdmin
+from .mixins import ListCreateDestroyViewSet
+from api.permissions import IsAdmin, AdminAddDeletePermission
 from api.serializers import (
     UserFullInfoSerializer, UserInfoForUserSerializer,
-    UserSignupSerializer, UserTokenSerializer)
-from reviews.models import generate_confirmation_code, User
+    UserSignupSerializer, UserTokenSerializer,
+    CategorySerializer, GenreSerializer, TitleSerializer
+)
+from reviews.models import generate_confirmation_code, User, Category, Genre, Title
 
 
 class UserSignup(generics.CreateAPIView):
@@ -99,3 +102,43 @@ class UserViewSet(viewsets.ModelViewSet):
             if self.action in ('retrieve', 'partial_update'):
                 return get_object_or_404(User, id=self.request.user.id)
         return super().get_object()
+class CategoryViewSet(ListCreateDestroyViewSet):
+    """
+    Вьюсет категории.
+    """
+
+    serializer_class = CategorySerializer
+    permission_classes = (AdminAddDeletePermission,)
+    queryset = Category.objects.all()
+
+
+class GenreViewSet(ListCreateDestroyViewSet):
+    """
+    Вьюсет жанра.
+    """
+
+    serializer_class = GenreSerializer
+    permission_classes = (AdminAddDeletePermission,)
+    queryset = Genre.objects.all()
+
+
+class TitleViewSet(viewsets.ModelViewSet):
+    """
+    Вьюсет заголовка.
+    """
+
+    serializer_class = TitleSerializer
+    permission_classes = (AdminAddDeletePermission,)
+    queryset = Title.objects.all()
+
+    def perform_create(self, serializer):
+        category = get_object_or_404(
+            Category, slug=self.request.data.get('category')
+        )
+        genre = Genre.objects.filter(
+            slug__in=self.request.data.getlist('genre')
+        )
+        serializer.save(category=category, genre=genre)
+
+    def perform_update(self, serializer):
+        self.perform_create(serializer)
