@@ -22,6 +22,5 @@ class IsAdminAuthorOrReadOnly(BasePermission):
             return request.user.is_authenticated
         return (request.user.is_authenticated and (
             request.user == obj.author
-            or user.role == 'admin'
-            or user.is_superuser
+            or user.role in ('admin', 'moderator')
         ))
