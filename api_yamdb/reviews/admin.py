@@ -1,6 +1,16 @@
 from django.contrib import admin
 
-from .models import Comment, Review, Title
+from reviews.models import Comment, Review, User
+
+
+class UserAdmin(admin.ModelAdmin):
+    list_display = (
+        'username',
+        'first_name',
+        'last_name',
+        'email',
+        'role'
+    )
 
 
 class ReviewAdmin(admin.ModelAdmin):
@@ -14,5 +24,6 @@ class CommentAdmin(admin.ModelAdmin):
     search_fields = ('text',)
 
 
+admin.site.register(User, UserAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(Review, ReviewAdmin)
