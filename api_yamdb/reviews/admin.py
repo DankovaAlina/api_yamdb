@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from reviews.models import User
+from reviews.models import Comment, Review, User
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -13,4 +13,17 @@ class UserAdmin(admin.ModelAdmin):
     )
 
 
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ('pk', 'title', 'text', 'author', 'score', 'pub_date')
+    search_fields = ('text',)
+    list_editable = ('text', 'author', 'score')
+
+
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('pk', 'review', 'author', 'text', 'pub_date')
+    search_fields = ('text',)
+
+
 admin.site.register(User, UserAdmin)
+admin.site.register(Comment, CommentAdmin)
+admin.site.register(Review, ReviewAdmin)
