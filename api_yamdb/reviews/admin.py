@@ -14,13 +14,13 @@ class UserAdmin(admin.ModelAdmin):
 
 
 class ReviewAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'title', 'text', 'author', 'score', 'pub_date')
+    list_display = ('pk', 'title_id', 'text', 'author', 'score', 'pub_date')
     search_fields = ('text',)
     list_editable = ('text', 'author', 'score')
 
 
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'review', 'author', 'text', 'pub_date')
+    list_display = ('pk', 'review_id', 'author', 'text', 'pub_date')
     search_fields = ('text',)
 
 

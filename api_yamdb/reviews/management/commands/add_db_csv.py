@@ -1,8 +1,8 @@
 import csv
 from django.core.management.base import BaseCommand
 
-from reviews.models import (Category, Title, Genre, User,
-                            Review, Comment, TitleGenre)
+from reviews.models import (Category, Comment, Genre, Review, Title,
+                            TitleGenre, User)
 
 
 MY_DICT = {

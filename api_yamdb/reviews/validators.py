@@ -11,10 +11,7 @@ symbol_validator = RegexValidator(
 
 
 def validate_year(value):
-    """
-    Валидация проверки года в модели Title.
-    """
-
+    """Валидация проверки года в модели Title."""
     current_year = datetime.date.today().year
     if value > current_year:
         raise ValidationError(

@@ -1,52 +1,45 @@
-
-from rest_framework.permissions import SAFE_METHODS, BasePermission
 from rest_framework import permissions
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 from reviews.models import User
+
+
+def get_user(user_id):
+    """Получает пользователя по id."""
+    if user_id:
+        user = User.objects.filter(id=user_id).first()
+        return user
+    return None
 
 
 class IsAdmin(permissions.BasePermission):
     """Проверяет, является ли пользователь администратором или суперюзером."""
 
-    def get_user(self, user_id):
-        """Получает пользователя по id."""
-        if user_id:
-            user = User.objects.filter(id=user_id).first()
-            return user
-        return None
-
     def has_permission(self, request, view):
-        user = self.get_user(request.user.id)
+        user = get_user(request.user.id)
         return user and (user.role == 'admin' or user.is_superuser)
 
     def has_object_permission(self, request, view, obj):
-        user = self.get_user(request.user.id)
+        user = get_user(request.user.id)
         return user and (user.role == 'admin' or user.is_superuser)
-      
-      
+
+
 class AdminAddDeletePermission(permissions.IsAdminUser):
-    """
-    Разрешение администраторам на добавление и удаление.
-    """
+    """Разрешение администраторам на добавление и удаление."""
 
     def has_permission(self, request, view):
-        return bool((request.method == 'GET')
-                    or (request.user and request.user.is_staff))
+        return (request.method == 'GET'
+                or (request.user and request.user.is_staff))
 
 
 class IsAdminAuthorOrReadOnly(BasePermission):
-
-    """Проверяет, что вносить изменения могут только администратор или автор объекта."""
-
-    def get_user(self, user_id):
-        """Получает пользователя по id."""
-        if user_id:
-            user = User.objects.filter(id=user_id).first()
-            return user
-        return None
+    """
+    Проверяет, что вносить изменения могут
+    только администратор или автор объекта.
+    """
 
     def has_object_permission(self, request, view, obj):
-        user = self.get_user(request.user.id)
+        user = get_user(request.user.id)
         if request.method in SAFE_METHODS:
             return True
         if request.method == 'POST':

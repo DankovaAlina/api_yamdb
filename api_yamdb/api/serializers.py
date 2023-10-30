@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from reviews.models import User, Category, Comment, Genre, Review, Title
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
 class UserFullInfoSerializer(serializers.ModelSerializer):
@@ -42,12 +42,10 @@ class UserInfoForUserSerializer(UserFullInfoSerializer):
 
     class Meta(UserFullInfoSerializer.Meta):
         read_only_fields = ('role',)
-     
-    
+
+
 class CategorySerializer(serializers.ModelSerializer):
-    """
-    Сериализатор категории.
-    """
+    """Сериализатор категории."""
 
     class Meta:
         model = Category
@@ -55,9 +53,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор заголовка.
-    """
+    """Сериализатор заголовка."""
 
     category = CategorySerializer()
     genre = serializers.StringRelatedField()
@@ -68,9 +64,7 @@ class TitleSerializer(serializers.ModelSerializer):
 
 
 class GenreSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор жанра.
-    """
+    """Сериализатор жанра."""
 
     class Meta:
         model = Genre

@@ -1,21 +1,25 @@
 from django.core.mail import send_mail
-from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, generics, permissions status, viewsets
+from rest_framework import filters, generics, status, viewsets
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import (
+    IsAuthenticated, IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .mixins import ListCreateDestroyViewSet
-from api.permissions import IsAdmin, AdminAddDeletePermission, IsAdminAuthorOrReadOnly
-from api.serializers import (
-    UserFullInfoSerializer, UserInfoForUserSerializer,
-    UserSignupSerializer, UserTokenSerializer,
-    CategorySerializer, CommentSerializer, GenreSerializer,
-    ReviewSerializer, TitleSerializer
+from api.mixins import ListCreateDestroyViewSet
+from api.permissions import (
+    AdminAddDeletePermission, IsAdmin, IsAdminAuthorOrReadOnly
 )
-from reviews.models import generate_confirmation_code, User, Category, Genre, Review, Title
+from api.serializers import (
+    CategorySerializer, CommentSerializer, GenreSerializer,
+    ReviewSerializer, TitleSerializer,
+    UserFullInfoSerializer, UserInfoForUserSerializer,
+    UserSignupSerializer, UserTokenSerializer
+)
+from reviews.models import (
+    Category, generate_confirmation_code, Genre, Review, Title, User
+)
 
 
 class UserSignup(generics.CreateAPIView):
@@ -107,9 +111,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class CategoryViewSet(ListCreateDestroyViewSet):
-    """
-    Вьюсет категории.
-    """
+    """Вьюсет категории."""
 
     serializer_class = CategorySerializer
     permission_classes = (AdminAddDeletePermission,)
@@ -117,9 +119,7 @@ class CategoryViewSet(ListCreateDestroyViewSet):
 
 
 class GenreViewSet(ListCreateDestroyViewSet):
-    """
-    Вьюсет жанра.
-    """
+    """Вьюсет жанра."""
 
     serializer_class = GenreSerializer
     permission_classes = (AdminAddDeletePermission,)
@@ -127,9 +127,7 @@ class GenreViewSet(ListCreateDestroyViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    """
-    Вьюсет заголовка.
-    """
+    """Вьюсет заголовка."""
 
     serializer_class = TitleSerializer
     permission_classes = (AdminAddDeletePermission,)
@@ -150,7 +148,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+    permission_classes = (IsAuthenticatedOrReadOnly,
                           IsAdminAuthorOrReadOnly)
 
     def get_queryset(self):
@@ -173,7 +171,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+    permission_classes = (IsAuthenticatedOrReadOnly,
                           IsAdminAuthorOrReadOnly)
 
     def get_queryset(self):

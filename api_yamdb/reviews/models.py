@@ -6,7 +6,7 @@ from django.contrib.auth.models import AbstractUser
 from api.consts import (
     MAX_LEN_CONFIRMATION_CODE, MAX_LEN_EMAIL_AND_BIO, MAX_LEN_ROLE, ROLES
 )
-from .validators import symbol_validator, validate_year
+from reviews.validators import symbol_validator, validate_year
 
 
 def generate_confirmation_code():
@@ -45,11 +45,9 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
-      
+
 class Category(models.Model):
-    """
-    Модель Категории.
-    """
+    """Модель Категории."""
 
     name = models.CharField(max_length=256, verbose_name='Название')
     slug = models.SlugField(unique=True, max_length=50,
@@ -66,9 +64,7 @@ class Category(models.Model):
 
 
 class Genre(models.Model):
-    """
-    Модель жанра.
-    """
+    """Модель жанра."""
 
     name = models.CharField(max_length=200, verbose_name='Название')
     slug = models.SlugField(unique=True, max_length=50,
@@ -118,7 +114,7 @@ class Title(models.Model):
     def __str__(self):
         return self.name
 
-      
+
 class TitleGenre(models.Model):
     title = models.ForeignKey(
         Title,
@@ -156,7 +152,7 @@ class Review(models.Model):
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
         constraints = [
-            models.UniqueConstraint(fields=['author', 'title'],
+            models.UniqueConstraint(fields=['author', 'title_id'],
                                     name='unique_review')
         ]
 
