@@ -80,7 +80,7 @@ class Genre(models.Model):
 
 
 class Title(models.Model):
-    """Модель заголовка."""
+    """Модель произведения."""
 
     name = models.CharField(max_length=256, verbose_name='Название')
     year = models.PositiveIntegerField(
@@ -97,21 +97,25 @@ class Title(models.Model):
         related_name='titles',
         verbose_name='Категория'
     )
-    descriptions = models.TextField(null=True, blank=True)
-    genres = models.ManyToManyField(
+    description = models.TextField(null=True, blank=True)
+    genre = models.ManyToManyField(
         Genre,
         through='TitleGenre',
         blank=True,
         related_name='titles',
         verbose_name='Жанр'
     )
+    rating = models.IntegerField('Рейтинг', default=None, null=True)
 
     class Meta:
-        ordering = ['name']
-        verbose_name = 'Заголовок'
-        verbose_name_plural = 'Заголовки'
+        """Мета класс произведения."""
+
+        ordering = ('name',)
+        verbose_name = 'Произведение'
+        verbose_name_plural = 'Произведения'
 
     def __str__(self):
+        """Описание произведения."""
         return self.name
 
 

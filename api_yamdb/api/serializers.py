@@ -1,5 +1,8 @@
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
 
@@ -49,26 +52,58 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = '__all__'
-
-
-class TitleSerializer(serializers.ModelSerializer):
-    """Сериализатор заголовка."""
-
-    category = CategorySerializer()
-    genre = serializers.StringRelatedField()
-
-    class Meta:
-        model = Title
-        fields = '__all__'
+        fields = ('name', 'slug')
+        lookup_field = 'slug'
 
 
 class GenreSerializer(serializers.ModelSerializer):
-    """Сериализатор жанра."""
+    """
+    Сериализатор жанра.
+    """
 
     class Meta:
         model = Genre
+        fields = ('name', 'slug')
+        lookup_field = 'slug'
+
+
+class TitleSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор произведений для Create, Partial_Update и Delete.
+    """
+
+    category = serializers.SlugRelatedField(
+        slug_field='slug', queryset=Category.objects.all()
+    )
+    genre = serializers.SlugRelatedField(
+        slug_field='slug', queryset=Genre.objects.all(), many=True
+    )
+
+    class Meta:
+        """Мета класс произведения."""
+
         fields = '__all__'
+        model = Title
+
+
+class TitleReadonlySerializer(serializers.ModelSerializer):
+    """
+    Сериализатор произведений для List и Retrieve.
+    """
+
+    rating = serializers.IntegerField(
+        source='reviews__score__avg', read_only=True
+    )
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(read_only=True, many=True)
+
+    class Meta:
+        """
+        Мета класс произведения.
+        """
+
+        fields = '__all__'
+        model = Title
 
 
 class ReviewSerializer(serializers.ModelSerializer):

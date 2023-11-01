@@ -1,4 +1,6 @@
 from django.core.mail import send_mail
+from django.db.models import Avg
+from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, generics, status, viewsets
 from rest_framework.pagination import PageNumberPagination
@@ -7,19 +9,21 @@ from rest_framework.permissions import (
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from api.mixins import ListCreateDestroyViewSet
+from api.permissions import AdminAddDeletePermission
+from api.mixins import MixinCategoryGenre
 from api.permissions import (
-    AdminAddDeletePermission, IsAdmin, IsAdminAuthorOrReadOnly
+    IsAdmin, IsAdminAuthorOrReadOnly
 )
 from api.serializers import (
     CategorySerializer, CommentSerializer, GenreSerializer,
     ReviewSerializer, TitleSerializer,
     UserFullInfoSerializer, UserInfoForUserSerializer,
-    UserSignupSerializer, UserTokenSerializer
+    UserSignupSerializer, UserTokenSerializer, TitleReadonlySerializer
 )
 from reviews.models import (
     Category, generate_confirmation_code, Genre, Review, Title, User
 )
+from .filters import TitleFilter
 
 
 class UserSignup(generics.CreateAPIView):
@@ -110,28 +114,42 @@ class UserViewSet(viewsets.ModelViewSet):
         return super().get_object()
 
 
-class CategoryViewSet(ListCreateDestroyViewSet):
-    """Вьюсет категории."""
+class CategoryViewSet(MixinCategoryGenre):
+    """
+    Вьюсет категории.
+    """
 
     serializer_class = CategorySerializer
-    permission_classes = (AdminAddDeletePermission,)
     queryset = Category.objects.all()
 
 
-class GenreViewSet(ListCreateDestroyViewSet):
-    """Вьюсет жанра."""
+class GenreViewSet(MixinCategoryGenre):
+    """
+    Вьюсет жанра.
+    """
 
     serializer_class = GenreSerializer
-    permission_classes = (AdminAddDeletePermission,)
     queryset = Genre.objects.all()
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    """Вьюсет заголовка."""
+    """
+    Вьюсет произведения.
+    """
 
-    serializer_class = TitleSerializer
     permission_classes = (AdminAddDeletePermission,)
-    queryset = Title.objects.all()
+    http_method_names = ('get', 'post', 'patch', 'delete',)
+    queryset = (
+        Title.objects.all().annotate(Avg('reviews__score')).order_by('name')
+    )
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = TitleFilter
+
+    def get_serializer_class(self):
+        """Получение произведений."""
+        if self.request.method in ('POST', 'PATCH'):
+            return TitleSerializer
+        return TitleReadonlySerializer
 
     def perform_create(self, serializer):
         category = get_object_or_404(
@@ -141,9 +159,6 @@ class TitleViewSet(viewsets.ModelViewSet):
             slug__in=self.request.data.getlist('genre')
         )
         serializer.save(category=category, genre=genre)
-
-    def perform_update(self, serializer):
-        self.perform_create(serializer)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

@@ -5,7 +5,9 @@ from reviews.models import User
 
 
 def get_user(user_id):
-    """Получает пользователя по id."""
+    """
+    Получает пользователя по id.
+    """
     if user_id:
         user = User.objects.filter(id=user_id).first()
         return user
@@ -13,7 +15,9 @@ def get_user(user_id):
 
 
 class IsAdmin(permissions.BasePermission):
-    """Проверяет, является ли пользователь администратором или суперюзером."""
+    """
+    Проверяет, является ли пользователь администратором или суперюзером.
+    """
 
     def has_permission(self, request, view):
         user = get_user(request.user.id)
@@ -25,11 +29,14 @@ class IsAdmin(permissions.BasePermission):
 
 
 class AdminAddDeletePermission(permissions.IsAdminUser):
-    """Разрешение администраторам на добавление и удаление."""
+    """
+    Разрешение администраторам на добавление и удаление.
+    """
 
     def has_permission(self, request, view):
-        return (request.method == 'GET'
-                or (request.user and request.user.is_staff))
+        return ((request.method in SAFE_METHODS)
+                or (request.user.is_authenticated
+                    and request.user.role == 'admin'))
 
 
 class IsAdminAuthorOrReadOnly(BasePermission):
