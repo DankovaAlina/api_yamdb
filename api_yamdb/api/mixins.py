@@ -1,6 +1,7 @@
 from rest_framework import filters, mixins, viewsets
-from api.permissions import AdminAddDeletePermission
 from rest_framework.pagination import PageNumberPagination
+
+from api.permissions import AdminAddDeletePermission
 
 
 class MixinCategoryGenre(

@@ -1,7 +1,7 @@
 from django.core.mail import send_mail
 from django.db.models import Avg
-from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, generics, status, viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
@@ -9,21 +9,20 @@ from rest_framework.permissions import (
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from api.permissions import AdminAddDeletePermission
+from api.filters import TitleFilter
 from api.mixins import MixinCategoryGenre
 from api.permissions import (
-    IsAdmin, IsAdminAuthorOrReadOnly
+    AdminAddDeletePermission, IsAdmin, IsAdminAuthorOrReadOnly
 )
 from api.serializers import (
     CategorySerializer, CommentSerializer, GenreSerializer,
-    ReviewSerializer, TitleSerializer,
+    ReviewSerializer, TitleReadonlySerializer, TitleSerializer,
     UserFullInfoSerializer, UserInfoForUserSerializer,
-    UserSignupSerializer, UserTokenSerializer, TitleReadonlySerializer
+    UserSignupSerializer, UserTokenSerializer
 )
 from reviews.models import (
     Category, generate_confirmation_code, Genre, Review, Title, User
 )
-from .filters import TitleFilter
 
 
 class UserSignup(generics.CreateAPIView):
