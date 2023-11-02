@@ -1,5 +1,6 @@
-from rest_framework import permissions
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import (
+    BasePermission, IsAdminUser, SAFE_METHODS
+)
 
 from reviews.models import User
 
@@ -14,7 +15,7 @@ def get_user(user_id):
     return None
 
 
-class IsAdmin(permissions.BasePermission):
+class IsAdmin(BasePermission):
     """
     Проверяет, является ли пользователь администратором или суперюзером.
     """
@@ -28,7 +29,7 @@ class IsAdmin(permissions.BasePermission):
         return user and (user.role == 'admin' or user.is_superuser)
 
 
-class AdminAddDeletePermission(permissions.IsAdminUser):
+class AdminAddDeletePermission(IsAdminUser):
     """
     Разрешение администраторам на добавление и удаление.
     """
