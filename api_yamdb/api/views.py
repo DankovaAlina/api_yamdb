@@ -84,7 +84,7 @@ class UserToken(generics.CreateAPIView):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserInfoForUserSerializer
-    permission_classes = [IsAdmin,]
+    permission_classes = [IsAdmin, ]
     lookup_field = 'username'
     pagination_class = PageNumberPagination
     filter_backends = (filters.SearchFilter,)
@@ -98,7 +98,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.kwargs.get('username') == 'me':
-            self.permission_classes = [IsAuthenticated,]
+            self.permission_classes = [IsAuthenticated, ]
         return super().get_permissions()
 
     def destroy(self, request, *args, **kwargs):
