@@ -111,7 +111,6 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True,
         slug_field='username'
     )
-    score = serializers.IntegerField()
     title = serializers.PrimaryKeyRelatedField(read_only=True)
 
     def validate(self, value):
