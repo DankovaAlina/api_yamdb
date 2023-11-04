@@ -108,7 +108,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True,
         slug_field='username'
     )
-    title = serializers.PrimaryKeyRelatedField(read_only=True)
+    title = TitleSerializer(read_only=True)
 
     def validate(self, value):
         author = self.context['request'].user

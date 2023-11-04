@@ -132,27 +132,31 @@ class TitleGenre(models.Model):
 
 
 class Review(models.Model):
+    """Модель отзывов."""
+
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
+        verbose_name='Произведение для оценки',
     )
-    text = models.TextField()
+    text = models.TextField('Ваш отзыв')
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
+        verbose_name='Автор отзыва',
     )
-    score = models.IntegerField(
+    score = models.PositiveIntegerField(
         null=True,
-        validators=[
+        validators=(
             MaxValueValidator(10, message='Оценка не может быть выше 10'),
             MinValueValidator(1, message='Оценка не может быть ниже 1')
-        ]
+        )
     )
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
 
     class Meta:
         default_related_name = 'reviews'
-        ordering = ['pub_date']
+        ordering = ('pub_date',)
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
         constraints = [
@@ -161,18 +165,22 @@ class Review(models.Model):
         ]
 
     def __str__(self):
-        return self.text
+        return f"Отзыв от {self.author} на {self.title}"
 
 
 class Comment(models.Model):
+    """Модель комментариев."""
+
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
+        verbose_name='Комментируемый отзыв',
     )
-    text = models.TextField()
+    text = models.TextField('Ваш комментарий')
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
+        verbose_name='Автор комментария',
     )
     pub_date = models.DateTimeField(
         'Дата публикации комментария',
@@ -182,7 +190,7 @@ class Comment(models.Model):
 
     class Meta:
         default_related_name = 'comments'
-        ordering = ['pub_date']
+        ordering = ('pub_date',)
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
 
