@@ -16,7 +16,7 @@ from api.permissions import (
 )
 from api.serializers import (
     CategorySerializer, CommentSerializer, GenreSerializer,
-    ReviewSerializer, TitleReadonlySerializer, TitleSerializer,
+    ReviewSerializer, TitleReadonlySerializer, TitleCreateDeleteSerializer,
     UserFullInfoSerializer, UserInfoForUserSerializer,
     UserSignupSerializer, UserTokenSerializer
 )
@@ -146,18 +146,9 @@ class TitleViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         """Получение произведений."""
-        if self.request.method in ('POST', 'PATCH'):
-            return TitleSerializer
+        if self.action in ('create', 'update', 'partial_update'):
+            return TitleCreateDeleteSerializer
         return TitleReadonlySerializer
-
-    def perform_create(self, serializer):
-        category = get_object_or_404(
-            Category, slug=self.request.data.get('category')
-        )
-        genre = Genre.objects.filter(
-            slug__in=self.request.data.getlist('genre')
-        )
-        serializer.save(category=category, genre=genre)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

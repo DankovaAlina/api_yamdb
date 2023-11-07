@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
+from django.db.models import Avg
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
 
@@ -64,7 +65,7 @@ class GenreSerializer(serializers.ModelSerializer):
         lookup_field = 'slug'
 
 
-class TitleSerializer(serializers.ModelSerializer):
+class TitleCreateDeleteSerializer(serializers.ModelSerializer):
     """
     Сериализатор произведений для Create, Partial_Update и Delete.
     """
@@ -75,6 +76,9 @@ class TitleSerializer(serializers.ModelSerializer):
     genre = serializers.SlugRelatedField(
         slug_field='slug', queryset=Genre.objects.all(), many=True
     )
+
+    def to_representation(self, instance):
+        return TitleReadonlySerializer(instance).data
 
     class Meta:
         """Мета класс произведения."""
@@ -88,11 +92,12 @@ class TitleReadonlySerializer(serializers.ModelSerializer):
     Сериализатор произведений для List и Retrieve.
     """
 
-    rating = serializers.IntegerField(
-        source='reviews__score__avg', read_only=True
-    )
+    rating = serializers.SerializerMethodField(read_only=True)
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
+
+    def get_rating(self, obj):
+        return obj.reviews.aggregate(Avg('score'))['score__avg']
 
     class Meta:
         """
@@ -101,6 +106,7 @@ class TitleReadonlySerializer(serializers.ModelSerializer):
 
         fields = '__all__'
         model = Title
+        read_only_fields = ('id', 'name', 'year', 'description')
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -108,7 +114,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True,
         slug_field='username'
     )
-    title = serializers.PrimaryKeyRelatedField(read_only=True)
+    title = TitleCreateDeleteSerializer(read_only=True)
 
     def validate(self, value):
         author = self.context['request'].user
