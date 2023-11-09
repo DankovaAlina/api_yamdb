@@ -1,13 +1,12 @@
-from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, generics, status, viewsets
+from rest_framework import filters, generics, viewsets
+from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
     IsAuthenticated, IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.filters import TitleFilter
 from api.mixins import MixinCategoryGenre
@@ -21,96 +20,66 @@ from api.serializers import (
     UserSignupSerializer, UserTokenSerializer
 )
 from reviews.models import (
-    Category, generate_confirmation_code, Genre, Review, Title, User
+    Category, Genre, Review, Title, User
 )
 
 
-class UserSignup(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSignupSerializer
-
-    def get_user(self, username, email):
-        """Получает пользователя по username и email."""
-        return User.objects.filter(
-            username=username,
-            email=email
-        ).first()
-
-    def post(self, request, *args, **kwargs):
-        user = self.get_user(
-            self.request.data.get('username'),
-            self.request.data.get('email')
-        )
-        if user:
-            user.confirmation_code = generate_confirmation_code()
-            user.save()
-        else:
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-        user = self.get_user(
-            self.request.data.get('username'),
-            self.request.data.get('email')
-        )
-        send_mail(
-            subject='Подтверждение регистрации',
-            message=f'Код подтверждения - {user.confirmation_code}',
-            from_email='api_yamdb@example.com',
-            recipient_list=[user.email],
-            fail_silently=True,
-        )
-        return Response(request.data, status=status.HTTP_200_OK)
-
-
-class UserToken(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserTokenSerializer
+class UserAuthMixin(generics.CreateAPIView):
+    """Миксин для юзеров."""
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = get_object_or_404(
-            User,
-            username=self.request.data['username']
-        )
-        if user.confirmation_code != self.request.data['confirmation_code']:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        token = RefreshToken.for_user(user)
-        return Response({
-            'token': str(token.access_token)
-        })
+        serializer.save()
+        return Response(serializer.data)
+
+
+class UserSignup(UserAuthMixin):
+    """Вьюсет регистрации юзера."""
+
+    serializer_class = UserSignupSerializer
+
+
+class UserToken(UserAuthMixin):
+    """Вьюсет получения токена."""
+
+    serializer_class = UserTokenSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
+    """Вьюсет юзера."""
+
     queryset = User.objects.all()
-    serializer_class = UserInfoForUserSerializer
-    permission_classes = [IsAdmin, ]
+    serializer_class = UserFullInfoSerializer
+    permission_classes = (IsAdmin,)
     lookup_field = 'username'
     pagination_class = PageNumberPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
     http_method_names = ['get', 'post', 'patch', 'delete']
 
-    def get_serializer_class(self):
-        if self.request.user.role == 'admin' or self.request.user.is_superuser:
-            return UserFullInfoSerializer
-        return super().get_serializer_class()
+    @action(detail=True)
+    def get_self_info(self, request):
+        """Получение информации о себе."""
+        serializer = UserInfoForUserSerializer(self.request.user)
+        return Response(serializer.data)
+
+    @action(detail=True)
+    def update_self_info(self, request):
+        """Редактирование информации о себе."""
+        serializer = UserInfoForUserSerializer(
+            self.request.user,
+            data=request.data,
+            partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
     def get_permissions(self):
-        if self.kwargs.get('username') == 'me':
-            self.permission_classes = [IsAuthenticated, ]
+        if self.name == 'self_info':
+            self.permission_classes = (IsAuthenticated, )
         return super().get_permissions()
-
-    def destroy(self, request, *args, **kwargs):
-        if self.kwargs.get('username') == 'me':
-            return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-        return super().destroy(request, *args, **kwargs)
-
-    def get_object(self):
-        if self.kwargs.get('username') == 'me':
-            if self.action in ('retrieve', 'partial_update'):
-                return get_object_or_404(User, id=self.request.user.id)
-        return super().get_object()
 
 
 class CategoryViewSet(MixinCategoryGenre):

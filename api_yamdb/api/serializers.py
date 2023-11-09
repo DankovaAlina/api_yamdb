@@ -1,46 +1,95 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from reviews.models import Category, Comment, Genre, Review, Title, User
+from api.utils import check_confirmation_code, send_confirmation_code
+from reviews.consts import MAX_LEN_EMAIL, MAX_LEN_USERNAME
+from reviews.models import (
+    Category, Comment,
+    Genre, Review, Title, User)
+from reviews.validators import username_validator, validate_username_me
 
 
 class UserFullInfoSerializer(serializers.ModelSerializer):
+    """Сериализатор полной информации юзера."""
 
     class Meta:
         model = User
         fields = (
             'username', 'email', 'first_name', 'last_name', 'bio', 'role'
         )
-        extra_kwargs = {
-            'url': {'lookup_field': 'username'}
-        }
-
-    def validate_username(self, value):
-        if value == 'me':
-            raise serializers.ValidationError(
-                'Использовать имя "me" в качестве username запрещено.'
-            )
-        return value
 
 
-class UserSignupSerializer(UserFullInfoSerializer):
+class UserSignupSerializer(serializers.Serializer):
+    """Сериализатор для регистрации юзера."""
 
-    class Meta(UserFullInfoSerializer.Meta):
-        fields = ('email', 'username')
+    username = serializers.CharField(
+        max_length=MAX_LEN_USERNAME,
+        validators=(username_validator, validate_username_me)
+    )
+    email = serializers.EmailField(max_length=MAX_LEN_EMAIL)
+
+    def create(self, validated_data):
+        email = validated_data.get('email')
+        username = validated_data.get('username')
+        user = User.objects.filter(email=email, username=username).first()
+        if not user:
+            user = User.objects.create(**validated_data)
+            user.save()
+        send_confirmation_code(user)
+        return user
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        username = attrs.get('username')
+        errors = {}
+        emailUser = User.objects.filter(email=email).first()
+        if emailUser and emailUser.username != username:
+            errors['email'] = ('Поле username не соответствует '
+                               'пользователю с данным email.')
+        usernameUser = User.objects.filter(username=username).first()
+        if usernameUser and usernameUser.email != email:
+            errors['username'] = ('Поле email не соответствует '
+                                  'пользователю с данным username.')
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs
 
 
-class UserTokenSerializer(serializers.ModelSerializer):
+class UserTokenSerializer(serializers.Serializer):
+    """Сериализатор для получения токена."""
+
     confirmation_code = serializers.CharField()
     username = serializers.CharField()
 
+    def create(self, validated_data):
+        user = User.objects.get(username=validated_data.get('username'))
+        token = RefreshToken.for_user(user)
+        return token
+
+    def validate(self, attrs):
+        user = get_object_or_404(
+            User,
+            username=attrs.get('username')
+        )
+        if not check_confirmation_code(user, attrs.get('confirmation_code')):
+            raise serializers.ValidationError(
+                'Неверный код подтверждения.'
+            )
+        return attrs
+
+    def to_representation(self, instance):
+        return {'token': str(instance.access_token)}
+
+
+class UserInfoForUserSerializer(serializers.ModelSerializer):
+    """Сериализатор информации о себе."""
+
     class Meta:
         model = User
-        fields = ('username', 'confirmation_code')
-
-
-class UserInfoForUserSerializer(UserFullInfoSerializer):
-
-    class Meta(UserFullInfoSerializer.Meta):
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+        )
         read_only_fields = ('role',)
 
 

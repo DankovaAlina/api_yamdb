@@ -1,49 +1,58 @@
-import random
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
-from api.consts import (
-    MAX_LEN_CONFIRMATION_CODE, MAX_LEN_EMAIL_AND_BIO, MAX_LEN_ROLE, ROLES
+from reviews.consts import MAX_LEN_ROLE, MAX_LEN_USERNAME
+from reviews.validators import (
+    symbol_validator, username_validator,
+    validate_username_me, validate_year
 )
-from reviews.validators import symbol_validator, validate_year
-
-
-def generate_confirmation_code():
-    """Генерирует код подтверждения при регистрации пользователя."""
-    return str(random.randint(100000, 999999))
 
 
 class User(AbstractUser):
+    """Модель пользователя."""
+
+    class UserRoles(models.TextChoices):
+        USER = 'user', _('Пользователь')
+        ADMIN = 'admin', _('Администратор')
+        MODERATOR = 'moderator', _('Модератор')
     email = models.EmailField(
         'Электронная почта',
-        max_length=MAX_LEN_EMAIL_AND_BIO,
         unique=True
     )
-    confirmation_code = models.CharField(
-        'Код подтверждения',
-        max_length=MAX_LEN_CONFIRMATION_CODE,
-        default=generate_confirmation_code()
-    )
     bio = models.TextField(
-        'Информация и пользователе',
-        max_length=MAX_LEN_EMAIL_AND_BIO,
+        'Информация о пользователе',
         blank=True
     )
     role = models.CharField(
         'Роль',
-        choices=ROLES,
+        choices=UserRoles.choices,
         max_length=MAX_LEN_ROLE,
-        default='user'
+        default=UserRoles.USER
+    )
+    username = models.CharField(
+        'Имя пользователя',
+        max_length=MAX_LEN_USERNAME,
+        unique=True,
+        validators=(username_validator, validate_username_me)
     )
 
     class Meta:
-        ordering = ['username']
+        ordering = ('username',)
         verbose_name = 'пользователь'
         verbose_name_plural = 'Пользователи'
 
     def __str__(self):
         return self.username
+
+    @property
+    def is_admin(self):
+        return self.role == self.UserRoles.ADMIN or self.is_superuser
+
+    @property
+    def is_moderator(self):
+        return self.role in (self.UserRoles.ADMIN, self.UserRoles.MODERATOR)
 
 
 class Category(models.Model):
