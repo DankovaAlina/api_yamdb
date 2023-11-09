@@ -10,4 +10,18 @@ def validate_year(value):
             'Год не может быть больше текущего года.',
             params={'value': value},
         )
+
+
+username_validator = RegexValidator(
+    r'^[\w.@+-]+\Z',
+    'Поле username не соответствует формату.'
+)
+
+
+def validate_username_me(value):
+    """Проверяет username на использование значения "me"."""
+    if value == 'me':
+        raise ValidationError(
+            'Использовать имя "me" в качестве username запрещено.'
+        )
     return value
