@@ -1,11 +1,13 @@
 import csv
+from django.apps import apps
 from django.core.management.base import BaseCommand
 
-from reviews.models import (Category, Comment, Genre, Review, Title,
-                            TitleGenre, User)
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
-MY_DICT = {
+TitleGenre = apps.get_model('reviews', 'title_genre')
+
+DATA_SOURCES_FOR_MOVIE_DATABASE = {
     Category: 'static/data/category.csv',
     Genre: 'static/data/genre.csv',
     User: 'static/data/users.csv',
@@ -27,7 +29,7 @@ class Command(BaseCommand):
     help = 'Заполняет базу данных данными из CSV-файлов'
 
     def handle(self, *args, **options):
-        for key, value in MY_DICT.items():
+        for key, value in DATA_SOURCES_FOR_MOVIE_DATABASE.items():
             csv_file = value
 
             # Получаем модель
@@ -41,7 +43,7 @@ class Command(BaseCommand):
             with open(csv_file, 'r') as file:
                 reader = csv.DictReader(file)
                 for row in reader:
-                    model.objects.create(**row)
+                    model.objects.get_or_create(**row)
 
             self.stdout.write(self.style.SUCCESS(
                 f'Данные из {csv_file} успешно загружены в базу данных'

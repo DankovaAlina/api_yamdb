@@ -1,5 +1,9 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
+from django.db.models import Avg
+from django.utils import timezone
+from django.http import HttpResponseBadRequest
+from django.core.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.utils import check_confirmation_code, send_confirmation_code
@@ -113,7 +117,7 @@ class GenreSerializer(serializers.ModelSerializer):
         lookup_field = 'slug'
 
 
-class TitleSerializer(serializers.ModelSerializer):
+class TitleCreateDeleteSerializer(serializers.ModelSerializer):
     """
     Сериализатор произведений для Create, Partial_Update и Delete.
     """
@@ -131,17 +135,38 @@ class TitleSerializer(serializers.ModelSerializer):
         fields = '__all__'
         model = Title
 
+    def to_representation(self, instance):
+        return TitleReadonlySerializer(instance).data
+
 
 class TitleReadonlySerializer(serializers.ModelSerializer):
     """
     Сериализатор произведений для List и Retrieve.
     """
 
-    rating = serializers.IntegerField(
-        source='reviews__score__avg', read_only=True
-    )
+    rating = serializers.SerializerMethodField(read_only=True)
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
+    description = serializers.CharField()
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['description'] = str(representation['description'])
+        category_instance = instance.category
+        category_representation = CategorySerializer(category_instance).data
+        representation['category'] = category_representation
+        return representation
+
+    def get_rating(self, obj):
+        return obj.reviews.aggregate(Avg('score'))['score__avg']
+
+    def validate_title_year(self, value):
+        """Валидация года произведения."""
+        if value > timezone.now().year:
+            raise ValidationError(
+                ('Год выпуска %(value)s больше текущего.'),
+                params={'value': value},
+            )
 
     class Meta:
         """
@@ -150,6 +175,7 @@ class TitleReadonlySerializer(serializers.ModelSerializer):
 
         fields = '__all__'
         model = Title
+        read_only_fields = ('id', 'name', 'year', 'description')
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -157,7 +183,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True,
         slug_field='username'
     )
-    title = serializers.PrimaryKeyRelatedField(read_only=True)
+    title = TitleCreateDeleteSerializer(read_only=True)
 
     def validate(self, value):
         author = self.context['request'].user
