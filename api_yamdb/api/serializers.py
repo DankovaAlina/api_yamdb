@@ -2,7 +2,6 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from django.db.models import Avg
 from django.utils import timezone
-from django.http import HttpResponseBadRequest
 from django.core.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -183,7 +182,6 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True,
         slug_field='username'
     )
-    title = TitleCreateDeleteSerializer(read_only=True)
 
     def validate(self, value):
         author = self.context['request'].user
@@ -201,7 +199,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         return value
 
     class Meta:
-        fields = '__all__'
+        fields = ('id', 'text', 'author', 'score', 'pub_date')
         model = Review
 
 
@@ -210,8 +208,7 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only=True,
         slug_field='username'
     )
-    review = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
-        fields = '__all__'
+        fields = ('id', 'text', 'author', 'pub_date')
         model = Comment

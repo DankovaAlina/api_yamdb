@@ -10,11 +10,6 @@ from reviews.validators import (
 )
 
 
-def generate_confirmation_code():
-    """Генерирует код подтверждения при регистрации пользователя."""
-    return str(random.randint(100000, 999999))
-
-
 class User(AbstractUser):
     """Модель пользователя."""
 
@@ -95,8 +90,6 @@ class Title(models.Model):
 
     name = models.CharField(max_length=MAX_LEN_NAME, verbose_name='Название')
     year = models.PositiveIntegerField(
-        null=True,
-        blank=True,
         validators=(validate_year,),
         verbose_name='Год',
     )
@@ -142,7 +135,6 @@ class Review(models.Model):
         verbose_name='Автор отзыва',
     )
     score = models.PositiveIntegerField(
-        null=True,
         validators=(
             MaxValueValidator(10, message='Оценка не может быть выше 10'),
             MinValueValidator(1, message='Оценка не может быть ниже 1')
