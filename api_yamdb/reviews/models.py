@@ -5,14 +5,9 @@ from django.utils.translation import gettext_lazy as _
 
 from reviews.consts import MAX_LEN_ROLE, MAX_LEN_USERNAME, MAX_LEN_NAME
 from reviews.validators import (
-    symbol_validator, username_validator,
+    username_validator,
     validate_username_me, validate_year
 )
-
-
-def generate_confirmation_code():
-    """Генерирует код подтверждения при регистрации пользователя."""
-    return str(random.randint(100000, 999999))
 
 
 class User(AbstractUser):
@@ -95,8 +90,6 @@ class Title(models.Model):
 
     name = models.CharField(max_length=MAX_LEN_NAME, verbose_name='Название')
     year = models.PositiveIntegerField(
-        null=True,
-        blank=True,
         validators=(validate_year,),
         verbose_name='Год',
     )
@@ -128,27 +121,30 @@ class Title(models.Model):
 
 
 class Review(models.Model):
+    """Модель отзывов."""
+
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
+        verbose_name='Произведение для оценки',
     )
-    text = models.TextField()
+    text = models.TextField('Ваш отзыв')
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
+        verbose_name='Автор отзыва',
     )
-    score = models.IntegerField(
-        null=True,
-        validators=[
+    score = models.PositiveIntegerField(
+        validators=(
             MaxValueValidator(10, message='Оценка не может быть выше 10'),
             MinValueValidator(1, message='Оценка не может быть ниже 1')
-        ]
+        )
     )
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
 
     class Meta:
         default_related_name = 'reviews'
-        ordering = ['pub_date']
+        ordering = ('pub_date',)
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
         constraints = [
@@ -157,18 +153,22 @@ class Review(models.Model):
         ]
 
     def __str__(self):
-        return self.text
+        return f"Отзыв от {self.author} на {self.title}"
 
 
 class Comment(models.Model):
+    """Модель комментариев."""
+
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
+        verbose_name='Комментируемый отзыв',
     )
-    text = models.TextField()
+    text = models.TextField('Ваш комментарий')
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
+        verbose_name='Автор комментария',
     )
     pub_date = models.DateTimeField(
         'Дата публикации комментария',
@@ -178,7 +178,7 @@ class Comment(models.Model):
 
     class Meta:
         default_related_name = 'comments'
-        ordering = ['pub_date']
+        ordering = ('pub_date',)
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
 
