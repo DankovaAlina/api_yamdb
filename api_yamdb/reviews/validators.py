@@ -3,6 +3,12 @@ from django.core.validators import RegexValidator
 from django.utils import timezone
 
 
+username_validator = RegexValidator(
+    r'^[\w.@+-]+\Z',
+    'Поле username не соответствует формату.'
+)
+
+
 def validate_year(value):
     """Валидация проверки года в модели Title."""
     current_year = timezone.now().year
@@ -11,12 +17,6 @@ def validate_year(value):
             'Год не может быть больше текущего года.',
             params={'value': value},
         )
-
-
-username_validator = RegexValidator(
-    r'^[\w.@+-]+\Z',
-    'Поле username не соответствует формату.'
-)
 
 
 def validate_username_me(value):

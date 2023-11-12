@@ -33,7 +33,7 @@ class AdminAddDeletePermission(IsAdminUser):
 class IsAdminAuthorOrReadOnly(BasePermission):
     """
     Проверяет, что вносить изменения могут
-    только администратор или автор объекта.
+    только администратор, модератор или автор объекта.
     """
 
     def has_object_permission(self, request, view, obj):

@@ -1,5 +1,3 @@
-
-# Максимальная длина поля name в моделях Genre, Category, Title.
 MAX_LEN_NAME = 256
 
 MAX_LEN_EMAIL = 254

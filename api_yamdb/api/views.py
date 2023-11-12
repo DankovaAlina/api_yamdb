@@ -1,7 +1,7 @@
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, generics, viewsets
+from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
@@ -9,7 +9,7 @@ from rest_framework.permissions import (
 from rest_framework.response import Response
 
 from api.filters import TitleFilter
-from api.mixins import MixinCategoryGenre
+from api.mixins import MixinCategoryGenre, UserAuthMixin
 from api.permissions import (
     AdminAddDeletePermission, IsAdmin, IsAdminAuthorOrReadOnly
 )
@@ -24,18 +24,8 @@ from reviews.models import (
 )
 
 
-class UserAuthMixin(generics.CreateAPIView):
-    """Миксин для юзеров."""
-
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
-
 class UserSignup(UserAuthMixin):
-    """Вьюсет регистрации юзера."""
+    """Вьюсет регистрации пользователя."""
 
     serializer_class = UserSignupSerializer
 
@@ -47,7 +37,7 @@ class UserToken(UserAuthMixin):
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    """Вьюсет юзера."""
+    """Вьюсет пользователя."""
 
     queryset = User.objects.all()
     serializer_class = UserFullInfoSerializer
@@ -83,27 +73,21 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class CategoryViewSet(MixinCategoryGenre):
-    """
-    Вьюсет категории.
-    """
+    """Вьюсет категории."""
 
     serializer_class = CategorySerializer
     queryset = Category.objects.all()
 
 
 class GenreViewSet(MixinCategoryGenre):
-    """
-    Вьюсет жанра.
-    """
+    """Вьюсет жанра."""
 
     serializer_class = GenreSerializer
     queryset = Genre.objects.all()
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    """
-    Вьюсет произведения.
-    """
+    """Вьюсет произведения."""
 
     permission_classes = (AdminAddDeletePermission,)
     http_method_names = ('get', 'post', 'patch', 'delete',)
@@ -121,12 +105,15 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
+    """Вьюсет отзыва."""
+
     serializer_class = ReviewSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,
                           IsAdminAuthorOrReadOnly)
     http_method_names = ('get', 'post', 'patch', 'delete',)
 
     def get_title(self):
+        """Получение произведения."""
         return get_object_or_404(
             Title,
             id=self.kwargs.get('title_id')
@@ -144,12 +131,15 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
+    """Вьюсет комментария."""
+
     serializer_class = CommentSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,
                           IsAdminAuthorOrReadOnly)
     http_method_names = ('get', 'post', 'patch', 'delete',)
 
     def get_review(self):
+        """получение отзыва."""
         return get_object_or_404(
             Review,
             id=self.kwargs.get('review_id'),

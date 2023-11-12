@@ -56,11 +56,10 @@ class User(AbstractUser):
 
 
 class BaseModelCategoryGenre(models.Model):
-    """
-    Абстрактная модель для категории и жанра.
-    """
+    """Абстрактная модель для категории и жанра."""
+
     name = models.CharField(max_length=MAX_LEN_NAME, verbose_name='Название')
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField('Слаг', unique=True)
 
     class Meta:
         ordering = ('name',)
@@ -70,7 +69,7 @@ class BaseModelCategoryGenre(models.Model):
 
 
 class Category(BaseModelCategoryGenre):
-    """Модель Категории."""
+    """Модель категории."""
 
     class Meta:
         verbose_name = 'Категория'
@@ -100,7 +99,9 @@ class Title(models.Model):
         blank=True,
         verbose_name='Категория',
     )
-    description = models.TextField(null=True, blank=True)
+    description = models.TextField(
+        null=True, blank=True, verbose_name='Описание'
+    )
     genre = models.ManyToManyField(
         Genre,
         blank=True,
@@ -135,6 +136,7 @@ class Review(models.Model):
         verbose_name='Автор отзыва',
     )
     score = models.PositiveIntegerField(
+        'Рейтинг',
         validators=(
             MaxValueValidator(10, message='Оценка не может быть выше 10'),
             MinValueValidator(1, message='Оценка не может быть ниже 1')

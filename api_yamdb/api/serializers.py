@@ -1,8 +1,8 @@
-from django.shortcuts import get_object_or_404
-from rest_framework import serializers
-from django.db.models import Avg
-from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.db.models import Avg
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.utils import check_confirmation_code, send_confirmation_code
@@ -14,7 +14,7 @@ from reviews.validators import username_validator, validate_username_me
 
 
 class UserFullInfoSerializer(serializers.ModelSerializer):
-    """Сериализатор полной информации юзера."""
+    """Сериализатор полной информации пользователя."""
 
     class Meta:
         model = User
@@ -24,7 +24,7 @@ class UserFullInfoSerializer(serializers.ModelSerializer):
 
 
 class UserSignupSerializer(serializers.Serializer):
-    """Сериализатор для регистрации юзера."""
+    """Сериализатор для регистрации пользователя."""
 
     username = serializers.CharField(
         max_length=MAX_LEN_USERNAME,
@@ -106,9 +106,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class GenreSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор жанра.
-    """
+    """Сериализатор жанра."""
 
     class Meta:
         model = Genre
@@ -168,9 +166,7 @@ class TitleReadonlySerializer(serializers.ModelSerializer):
             )
 
     class Meta:
-        """
-        Мета класс произведения.
-        """
+        """Мета класс произведения."""
 
         fields = '__all__'
         model = Title
@@ -178,6 +174,8 @@ class TitleReadonlySerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    """Сериализатор отзыва."""
+
     author = serializers.SlugRelatedField(
         read_only=True,
         slug_field='username'
@@ -204,6 +202,8 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    """Сериализатор комментария."""
+
     author = serializers.SlugRelatedField(
         read_only=True,
         slug_field='username'
