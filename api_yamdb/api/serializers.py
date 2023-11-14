@@ -144,7 +144,6 @@ class TitleReadonlySerializer(serializers.ModelSerializer):
     rating = serializers.SerializerMethodField(read_only=True)
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
-    description = serializers.CharField()
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -156,14 +155,6 @@ class TitleReadonlySerializer(serializers.ModelSerializer):
 
     def get_rating(self, obj):
         return obj.reviews.aggregate(Avg('score'))['score__avg']
-
-    def validate_title_year(self, value):
-        """Валидация года произведения."""
-        if value > timezone.now().year:
-            raise ValidationError(
-                ('Год выпуска %(value)s больше текущего.'),
-                params={'value': value},
-            )
 
     class Meta:
         """Мета класс произведения."""
