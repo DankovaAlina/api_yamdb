@@ -139,7 +139,7 @@ class TitleReadonlySerializer(serializers.ModelSerializer):
     Сериализатор произведений для List и Retrieve.
     """
 
-    rating = serializers.IntegerField(read_only=True)
+    rating = serializers.IntegerField(read_only=True, default=0)
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
 
