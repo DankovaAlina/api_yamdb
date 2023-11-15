@@ -48,28 +48,27 @@ class UserViewSet(viewsets.ModelViewSet):
     search_fields = ('username',)
     http_method_names = ['get', 'post', 'patch', 'delete']
 
-    @action(detail=True)
-    def get_self_info(self, request):
-        """Получение информации о себе."""
-        serializer = UserInfoForUserSerializer(self.request.user)
-        return Response(serializer.data)
-
-    @action(detail=True)
-    def update_self_info(self, request):
-        """Редактирование информации о себе."""
-        serializer = UserInfoForUserSerializer(
-            self.request.user,
-            data=request.data,
-            partial=True
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
-    def get_permissions(self):
-        if self.name == 'self_info':
-            self.permission_classes = (IsAuthenticated, )
-        return super().get_permissions()
+    @action(
+        detail=False,
+        methods=['get', 'patch'],
+        url_path='me',
+        url_name='get_or_update_self_info',
+        permission_classes=(IsAuthenticated,)
+    )
+    def self_info(self, request):
+        """Получение/редактирование информации о себе."""
+        if request.method == 'GET':
+            serializer = UserInfoForUserSerializer(self.request.user)
+            return Response(serializer.data)
+        else:
+            serializer = UserInfoForUserSerializer(
+                self.request.user,
+                data=request.data,
+                partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
 
 
 class CategoryViewSet(MixinCategoryGenre):
@@ -92,7 +91,8 @@ class TitleViewSet(viewsets.ModelViewSet):
     permission_classes = (AdminAddDeletePermission,)
     http_method_names = ('get', 'post', 'patch', 'delete',)
     queryset = (
-        Title.objects.all().annotate(Avg('reviews__score')).order_by('name')
+        Title.objects.all().
+        annotate(rating=Avg('reviews__score')).order_by('name')
     )
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
@@ -123,10 +123,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return self.get_title().reviews.all()
 
     def perform_create(self, serializer):
-        title = self.get_title()
         serializer.save(
             author=self.request.user,
-            title=title
+            title=self.get_title()
         )
 
 
@@ -150,8 +149,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         return self.get_review().comments.all()
 
     def perform_create(self, serializer):
-        review = self.get_review()
         serializer.save(
             author=self.request.user,
-            review=review
+            review=self.get_review()
         )
