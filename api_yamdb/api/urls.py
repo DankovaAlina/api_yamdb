@@ -1,6 +1,5 @@
 from django.urls import include, path
 from rest_framework import routers
-
 from api.views import (CategoryViewSet, CommentViewSet,
                        GenreViewSet, ReviewViewSet, TitleViewSet,
                        UserSignup, UserToken, UserViewSet)
@@ -25,13 +24,6 @@ router_v1.register(
 
 
 urlpatterns = [
-    path('v1/users/me/', UserViewSet.as_view(
-        {
-            'get': 'get_self_info',
-            'patch': 'update_self_info'
-        },
-        name='self_info')
-    ),
     path('v1/', include(router_v1.urls)),
     path('v1/auth/signup/', UserSignup.as_view()),
     path('v1/auth/token/', UserToken.as_view()),
