@@ -148,7 +148,6 @@ class TitleReadonlySerializer(serializers.ModelSerializer):
 
         fields = '__all__'
         model = Title
-        # read_only_fields = ('id', 'name', 'year', 'description')
 
 
 class ReviewSerializer(serializers.ModelSerializer):
