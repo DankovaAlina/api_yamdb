@@ -102,7 +102,6 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ('name', 'slug')
-        lookup_field = 'slug'
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -111,7 +110,6 @@ class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
         fields = ('name', 'slug')
-        lookup_field = 'slug'
 
 
 class TitleCreateDeleteSerializer(serializers.ModelSerializer):
@@ -141,27 +139,16 @@ class TitleReadonlySerializer(serializers.ModelSerializer):
     Сериализатор произведений для List и Retrieve.
     """
 
-    rating = serializers.SerializerMethodField(read_only=True)
+    rating = serializers.IntegerField(read_only=True)
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['description'] = str(representation['description'])
-        category_instance = instance.category
-        category_representation = CategorySerializer(category_instance).data
-        representation['category'] = category_representation
-        return representation
-
-    def get_rating(self, obj):
-        return obj.reviews.aggregate(Avg('score'))['score__avg']
 
     class Meta:
         """Мета класс произведения."""
 
         fields = '__all__'
         model = Title
-        read_only_fields = ('id', 'name', 'year', 'description')
+        # read_only_fields = ('id', 'name', 'year', 'description')
 
 
 class ReviewSerializer(serializers.ModelSerializer):

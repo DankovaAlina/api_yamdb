@@ -97,11 +97,10 @@ class Title(models.Model):
         Category,
         on_delete=models.SET_NULL,
         null=True,
-        blank=True,
         verbose_name='Категория',
     )
     description = models.TextField(
-        null=True, blank=True, verbose_name='Описание'
+        blank=True, verbose_name='Описание'
     )
     genre = models.ManyToManyField(
         Genre,
