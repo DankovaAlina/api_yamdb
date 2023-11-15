@@ -52,7 +52,7 @@ class User(AbstractUser):
 
     @property
     def is_moderator(self):
-        return self.role in (self.UserRoles.ADMIN, self.UserRoles.MODERATOR)
+        return self.role == self.UserRoles.MODERATOR
 
 
 class Category(models.Model):

@@ -1,12 +1,15 @@
+from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
-from django.db.models import Avg
+from django.db.models import Avg, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from api.utils import check_confirmation_code, send_confirmation_code
-from reviews.consts import MAX_LEN_EMAIL, MAX_LEN_USERNAME
+from api.utils import send_confirmation_code
+from reviews.consts import (
+    ERROR_MESSAGE_SIGNUP, MAX_LEN_EMAIL, MAX_LEN_USERNAME
+)
 from reviews.models import (
     Category, Comment,
     Genre, Review, Title, User)
@@ -33,12 +36,9 @@ class UserSignupSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=MAX_LEN_EMAIL)
 
     def create(self, validated_data):
-        email = validated_data.get('email')
-        username = validated_data.get('username')
-        user = User.objects.filter(email=email, username=username).first()
+        user = validated_data.get('user')
         if not user:
             user = User.objects.create(**validated_data)
-            user.save()
         send_confirmation_code(user)
         return user
 
@@ -46,16 +46,22 @@ class UserSignupSerializer(serializers.Serializer):
         email = attrs.get('email')
         username = attrs.get('username')
         errors = {}
-        emailUser = User.objects.filter(email=email).first()
-        if emailUser and emailUser.username != username:
-            errors['email'] = ('Поле username не соответствует '
-                               'пользователю с данным email.')
-        usernameUser = User.objects.filter(username=username).first()
-        if usernameUser and usernameUser.email != email:
-            errors['username'] = ('Поле email не соответствует '
-                                  'пользователю с данным username.')
-        if errors:
-            raise serializers.ValidationError(errors)
+        users = User.objects.filter(
+            Q(email=email) | Q(username=username)
+        ).distinct()
+        if users:
+            if any(user.username != username for user in users):
+                errors['email'] = ERROR_MESSAGE_SIGNUP.format(
+                    'username', 'email'
+                )
+            if any(user.email != email for user in users):
+                errors['username'] = ERROR_MESSAGE_SIGNUP.format(
+                    'email', 'username'
+                )
+            if errors:
+                raise serializers.ValidationError(errors)
+            else:
+                attrs['user'] = users.first()
         return attrs
 
 
@@ -66,7 +72,7 @@ class UserTokenSerializer(serializers.Serializer):
     username = serializers.CharField()
 
     def create(self, validated_data):
-        user = User.objects.get(username=validated_data.get('username'))
+        user = validated_data.get('user')
         token = RefreshToken.for_user(user)
         return token
 
@@ -75,10 +81,13 @@ class UserTokenSerializer(serializers.Serializer):
             User,
             username=attrs.get('username')
         )
-        if not check_confirmation_code(user, attrs.get('confirmation_code')):
+        if not default_token_generator.check_token(
+            user, attrs.get('confirmation_code')
+        ):
             raise serializers.ValidationError(
                 'Неверный код подтверждения.'
             )
+        attrs['user'] = user
         return attrs
 
     def to_representation(self, instance):

@@ -2,8 +2,6 @@ from rest_framework.permissions import (
     BasePermission, IsAdminUser, SAFE_METHODS
 )
 
-from reviews.models import User
-
 
 class IsAdmin(BasePermission):
     """
@@ -11,12 +9,10 @@ class IsAdmin(BasePermission):
     """
 
     def has_permission(self, request, view):
-        user = User.objects.filter(id=request.user.id).first()
-        return user and user.is_admin
+        return request.user.is_authenticated and request.user.is_admin
 
     def has_object_permission(self, request, view, obj):
-        user = User.objects.filter(id=request.user.id).first()
-        return user and user.is_admin
+        return request.user.is_authenticated and request.user.is_admin
 
 
 class AdminAddDeletePermission(IsAdminUser):
@@ -37,11 +33,12 @@ class IsAdminAuthorOrReadOnly(BasePermission):
     """
 
     def has_object_permission(self, request, view, obj):
-        user = User.objects.filter(id=request.user.id).first()
         if request.method in SAFE_METHODS:
             return True
         if request.method == 'POST':
             return request.user.is_authenticated
         return (request.user.is_authenticated and (
-            request.user == obj.author or user.is_moderator or user.is_admin
+            request.user == obj.author
+            or request.user.is_moderator
+            or request.user.is_admin
         ))

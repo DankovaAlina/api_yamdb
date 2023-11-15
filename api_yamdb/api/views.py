@@ -48,28 +48,27 @@ class UserViewSet(viewsets.ModelViewSet):
     search_fields = ('username',)
     http_method_names = ['get', 'post', 'patch', 'delete']
 
-    @action(detail=True)
-    def get_self_info(self, request):
-        """Получение информации о себе."""
-        serializer = UserInfoForUserSerializer(self.request.user)
-        return Response(serializer.data)
-
-    @action(detail=True)
-    def update_self_info(self, request):
-        """Редактирование информации о себе."""
-        serializer = UserInfoForUserSerializer(
-            self.request.user,
-            data=request.data,
-            partial=True
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
-    def get_permissions(self):
-        if self.name == 'self_info':
-            self.permission_classes = (IsAuthenticated, )
-        return super().get_permissions()
+    @action(
+        detail=False,
+        methods=['get', 'patch'],
+        url_path='me',
+        url_name='get_or_update_self_info',
+        permission_classes=(IsAuthenticated,)
+    )
+    def self_info(self, request):
+        """Получение/редактирование информации о себе."""
+        if request.method == 'GET':
+            serializer = UserInfoForUserSerializer(self.request.user)
+            return Response(serializer.data)
+        else:
+            serializer = UserInfoForUserSerializer(
+                self.request.user,
+                data=request.data,
+                partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
 
 
 class CategoryViewSet(MixinCategoryGenre):
