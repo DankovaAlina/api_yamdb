@@ -92,7 +92,8 @@ class TitleViewSet(viewsets.ModelViewSet):
     permission_classes = (AdminAddDeletePermission,)
     http_method_names = ('get', 'post', 'patch', 'delete',)
     queryset = (
-        Title.objects.all().annotate(Avg('reviews__score')).order_by('name')
+        Title.objects.all().
+        annotate(rating=Avg('reviews__score')).order_by('name')
     )
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter

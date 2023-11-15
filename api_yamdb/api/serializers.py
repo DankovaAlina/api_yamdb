@@ -102,7 +102,6 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ('name', 'slug')
-        lookup_field = 'slug'
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -111,7 +110,6 @@ class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
         fields = ('name', 'slug')
-        lookup_field = 'slug'
 
 
 class TitleCreateDeleteSerializer(serializers.ModelSerializer):
@@ -141,36 +139,15 @@ class TitleReadonlySerializer(serializers.ModelSerializer):
     Сериализатор произведений для List и Retrieve.
     """
 
-    rating = serializers.SerializerMethodField(read_only=True)
+    rating = serializers.IntegerField(read_only=True, default=0)
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
-    description = serializers.CharField()
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['description'] = str(representation['description'])
-        category_instance = instance.category
-        category_representation = CategorySerializer(category_instance).data
-        representation['category'] = category_representation
-        return representation
-
-    def get_rating(self, obj):
-        return obj.reviews.aggregate(Avg('score'))['score__avg']
-
-    def validate_title_year(self, value):
-        """Валидация года произведения."""
-        if value > timezone.now().year:
-            raise ValidationError(
-                ('Год выпуска %(value)s больше текущего.'),
-                params={'value': value},
-            )
 
     class Meta:
         """Мета класс произведения."""
 
         fields = '__all__'
         model = Title
-        read_only_fields = ('id', 'name', 'year', 'description')
 
 
 class ReviewSerializer(serializers.ModelSerializer):

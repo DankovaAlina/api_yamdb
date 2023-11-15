@@ -55,33 +55,34 @@ class User(AbstractUser):
         return self.role in (self.UserRoles.ADMIN, self.UserRoles.MODERATOR)
 
 
-class BaseModelCategoryGenre(models.Model):
-    """Абстрактная модель для категории и жанра."""
+class Category(models.Model):
+    """Модель категории."""
 
     name = models.CharField(max_length=MAX_LEN_NAME, verbose_name='Название')
     slug = models.SlugField('Слаг', unique=True)
 
     class Meta:
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
         ordering = ('name',)
 
     def __str__(self):
         return self.name
 
 
-class Category(BaseModelCategoryGenre):
-    """Модель категории."""
-
-    class Meta:
-        verbose_name = 'Категория'
-        verbose_name_plural = 'Категории'
-
-
-class Genre(BaseModelCategoryGenre):
+class Genre(models.Model):
     """Модель жанра."""
+
+    name = models.CharField(max_length=MAX_LEN_NAME, verbose_name='Название')
+    slug = models.SlugField('Слаг', unique=True)
 
     class Meta:
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
+        ordering = ('name',)
+
+    def __str__(self):
+        return self.name
 
 
 class Title(models.Model):
@@ -96,11 +97,10 @@ class Title(models.Model):
         Category,
         on_delete=models.SET_NULL,
         null=True,
-        blank=True,
         verbose_name='Категория',
     )
     description = models.TextField(
-        null=True, blank=True, verbose_name='Описание'
+        blank=True, verbose_name='Описание'
     )
     genre = models.ManyToManyField(
         Genre,
