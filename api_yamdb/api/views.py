@@ -51,24 +51,22 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(
         detail=False,
         methods=['get', 'patch'],
-        url_path='me',
         url_name='get_or_update_self_info',
         permission_classes=(IsAuthenticated,)
     )
-    def self_info(self, request):
+    def me(self, request):
         """Получение/редактирование информации о себе."""
         if request.method == 'GET':
             serializer = UserInfoForUserSerializer(self.request.user)
             return Response(serializer.data)
-        else:
-            serializer = UserInfoForUserSerializer(
-                self.request.user,
-                data=request.data,
-                partial=True
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data)
+        serializer = UserInfoForUserSerializer(
+            self.request.user,
+            data=request.data,
+            partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class CategoryViewSet(MixinCategoryGenre):
