@@ -35,7 +35,7 @@ class UserSignupSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         user = validated_data.get('user')
-        if not user:
+        if user is None:
             user = User.objects.create(**validated_data)
         send_confirmation_code(user)
         return user
@@ -46,7 +46,7 @@ class UserSignupSerializer(serializers.Serializer):
         errors = {}
         users = User.objects.filter(
             Q(email=email) | Q(username=username)
-        ).distinct()
+        )
         if users:
             if any(user.username != username for user in users):
                 errors['email'] = ERROR_MESSAGE_SIGNUP.format(
@@ -58,8 +58,7 @@ class UserSignupSerializer(serializers.Serializer):
                 )
             if errors:
                 raise serializers.ValidationError(errors)
-            else:
-                attrs['user'] = users.first()
+            attrs['user'] = users.first()
         return attrs
 
 
