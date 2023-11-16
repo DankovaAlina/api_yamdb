@@ -33,7 +33,7 @@ class Command(BaseCommand):
                 return
 
             # Заполняем модель данными из CSV-файла
-            with open(csv_file, 'r') as file:
+            with open(csv_file, 'r', encoding='utf-8') as file:
                 reader = csv.DictReader(file)
                 for row in reader:
                     model.objects.get_or_create(**row)

@@ -145,15 +145,16 @@ class TitleReadonlySerializer(serializers.ModelSerializer):
     Сериализатор произведений для List и Retrieve.
     """
 
-    rating = serializers.IntegerField(read_only=True, default=0)
-    category = CategorySerializer(read_only=True)
-    genre = GenreSerializer(read_only=True, many=True)
+    rating = serializers.IntegerField(default=0)
+    category = CategorySerializer()
+    genre = GenreSerializer(many=True)
 
     class Meta:
         """Мета класс произведения."""
 
         fields = '__all__'
         model = Title
+        read_only_fields = ('__all__',)
 
 
 class ReviewSerializer(serializers.ModelSerializer):
